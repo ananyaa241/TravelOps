@@ -32,24 +32,16 @@ app.use(helmet({
   crossOriginResourcePolicy: false,
 }));
 
-// CORS Configuration
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'http://127.0.0.1:5173',
-  process.env.CLIENT_URL,
-].filter(Boolean);
-
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
-      callback(null, true);
-    } else {
-      callback(new Error('CORS blocked origin'));
-    }
-  },
+// CORS Configuration - Permissive for cross-domain SaaS deployments
+const corsOptions = {
+  origin: true, // Dynamically allow any incoming origin (Vercel, localhost, Render)
   credentials: true,
-}));
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -58,7 +50,7 @@ app.use(morgan('dev'));
 // Rate Limiter
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 500,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Too many requests from this IP, please try again later.' },
@@ -66,16 +58,18 @@ const apiLimiter = rateLimit({
 app.use('/api/', apiLimiter);
 
 // Health check endpoint for Render/uptime monitors
-app.get('/api/health', (req, res) => {
+const healthHandler = (req, res) => {
   res.json({
     status: 'ok',
     service: 'TravelOps API',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
   });
-});
+};
+app.get('/api/health', healthHandler);
+app.get('/health', healthHandler);
 
-// API Routes
+// API Routes mounted on /api/* (standard)
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/departments', departmentRoutes);
@@ -91,6 +85,23 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/audit-logs', auditRoutes);
+
+// Fallback Aliases mounted on root /* (for clients missing /api prefix)
+app.use('/auth', authRoutes);
+app.use('/users', userRoutes);
+app.use('/departments', departmentRoutes);
+app.use('/travel-requests', travelRequestRoutes);
+app.use('/approvals', approvalRoutes);
+app.use('/policies', policyRoutes);
+app.use('/itineraries', itineraryRoutes);
+app.use('/bookings', bookingRoutes);
+app.use('/vendors', vendorRoutes);
+app.use('/expenses', expenseRoutes);
+app.use('/reimbursements', reimbursementRoutes);
+app.use('/reports', reportRoutes);
+app.use('/dashboard', dashboardRoutes);
+app.use('/notifications', notificationRoutes);
+app.use('/audit-logs', auditRoutes);
 
 // Root fallback
 app.get('/', (req, res) => {
