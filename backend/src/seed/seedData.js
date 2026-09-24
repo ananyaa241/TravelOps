@@ -1,4 +1,11 @@
 // backend/src/seed/seedData.js
+const dns = require('dns');
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
+} catch (e) {
+  // Ignore if fallback fails
+}
+
 require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('../models/User');
@@ -18,25 +25,29 @@ const AuditLog = require('../models/AuditLog');
 const seedDB = async () => {
   try {
     const mongoURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/travelops';
-    await mongoose.connect(mongoURI);
-    console.log('[Seed] Connected to MongoDB...');
+    await mongoose.connect(mongoURI, {
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 30000,
+      maxPoolSize: 10,
+    });
+    console.log('[Seed] Connected to MongoDB Atlas...');
 
-    // Clear collections
-    await Promise.all([
-      User.deleteMany({}),
-      Department.deleteMany({}),
-      TravelPolicy.deleteMany({}),
-      ApprovalRule.deleteMany({}),
-      TravelRequest.deleteMany({}),
-      Approval.deleteMany({}),
-      Itinerary.deleteMany({}),
-      Booking.deleteMany({}),
-      Vendor.deleteMany({}),
-      Expense.deleteMany({}),
-      Reimbursement.deleteMany({}),
-      Notification.deleteMany({}),
-      AuditLog.deleteMany({}),
-    ]);
+    // Clear collections sequentially to prevent socket pool contention
+    console.log('[Seed] Clearing existing collections...');
+    await User.deleteMany({});
+    await Department.deleteMany({});
+    await TravelPolicy.deleteMany({});
+    await ApprovalRule.deleteMany({});
+    await TravelRequest.deleteMany({});
+    await Approval.deleteMany({});
+    await Itinerary.deleteMany({});
+    await Booking.deleteMany({});
+    await Vendor.deleteMany({});
+    await Expense.deleteMany({});
+    await Reimbursement.deleteMany({});
+    await Notification.deleteMany({});
+    await AuditLog.deleteMany({});
     console.log('[Seed] Cleared existing data.');
 
     // 1. Create Departments
