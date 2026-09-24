@@ -1,7 +1,7 @@
-// frontend/src/App.jsx
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Login } from './pages/Auth/Login';
+import { Register } from './pages/Auth/Register';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 import { DashboardRouter } from './pages/Dashboard/DashboardRouter';
 import { TravelRequestsPage } from './pages/Travel/TravelRequestsPage';
@@ -20,6 +20,7 @@ export default function App() {
     <Routes>
       {/* Public routes */}
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
       {/* Protected Routes inside Layout */}
       <Route element={<ProtectedRoute />}>

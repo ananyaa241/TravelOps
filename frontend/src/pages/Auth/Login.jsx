@@ -1,6 +1,5 @@
-// frontend/src/pages/Auth/Login.jsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth, DEMO_ACCOUNTS } from '../../context/AuthContext';
 import {
   Plane,
@@ -205,6 +204,15 @@ export const Login = () => {
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
+
+          <div className="mt-5 pt-4 border-t border-slate-100 text-center">
+            <p className="text-xs text-slate-500">
+              New employee or team member?{' '}
+              <Link to="/register" className="font-bold text-brand-600 hover:text-brand-700 hover:underline">
+                Create an account
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

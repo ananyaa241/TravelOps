@@ -116,6 +116,29 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const register = async (formData) => {
+    setLoading(true);
+    try {
+      const res = await authAPI.register(formData);
+      const { token: jwtToken, ...userData } = res.data.data;
+
+      localStorage.setItem('travelops_token', jwtToken);
+      localStorage.setItem('travelops_user', JSON.stringify(userData));
+
+      setToken(jwtToken);
+      setUser(userData);
+      fetchNotifications();
+      return { success: true, user: userData };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Registration failed. Please check your inputs.',
+      };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const switchRoleDemo = async (role) => {
     const target = DEMO_ACCOUNTS.find(acc => acc.role === role);
     if (!target) return;
@@ -147,6 +170,7 @@ export const AuthProvider = ({ children }) => {
         setUnreadNotifications,
         fetchNotifications,
         login,
+        register,
         logout,
         switchRoleDemo,
         updateUser,
