@@ -52,8 +52,10 @@ export const TravelRequestModal = ({ isOpen, onClose, onSuccess }) => {
     violations: [],
   });
 
+  const [errors, setErrors] = useState({});
+
   const [formData, setFormData] = useState({
-    purpose: '',
+    purpose: 'Client Visit & Technical Consulting',
     travelType: 'Domestic',
     origin: 'Hyderabad',
     destination: 'Bengaluru',
@@ -138,7 +140,35 @@ export const TravelRequestModal = ({ isOpen, onClose, onSuccess }) => {
     }
   };
 
+  const validateStep = (currentStep) => {
+    const errs = {};
+    if (currentStep === 1) {
+      if (!formData.purpose || !formData.purpose.trim()) {
+        errs.purpose = 'Business purpose of travel is required.';
+      }
+    } else if (currentStep === 2) {
+      if (!formData.origin?.trim()) {
+        errs.origin = 'Origin city is required.';
+      }
+      if (!formData.destination?.trim()) {
+        errs.destination = 'Destination city is required.';
+      }
+      if (!formData.departureDate) {
+        errs.departureDate = 'Departure date is required.';
+      }
+      if (!formData.returnDate) {
+        errs.returnDate = 'Return date is required.';
+      }
+      if (formData.departureDate && formData.returnDate && new Date(formData.returnDate) < new Date(formData.departureDate)) {
+        errs.returnDate = 'Return date cannot be earlier than departure date.';
+      }
+    }
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const handleNext = () => {
+    if (!validateStep(step)) return;
     if (step < 5) setStep(step + 1);
   };
 
@@ -147,10 +177,17 @@ export const TravelRequestModal = ({ isOpen, onClose, onSuccess }) => {
   };
 
   const handleSubmit = async (isDraft = false) => {
+    if (!formData.purpose || !formData.purpose.trim()) {
+      setErrors({ purpose: 'Business purpose of travel is required.' });
+      setStep(1);
+      alert('Business purpose of travel is required.');
+      return;
+    }
     setSubmitting(true);
     try {
       const payload = {
         ...formData,
+        purpose: formData.purpose.trim(),
         durationDays,
         estimatedTotalCost,
         status: isDraft ? 'Draft' : 'Submitted',
@@ -239,15 +276,25 @@ export const TravelRequestModal = ({ isOpen, onClose, onSuccess }) => {
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                Business Purpose of Travel *
+                Business Purpose of Travel <span className="text-red-500">*</span>
               </label>
               <textarea
                 rows={3}
                 value={formData.purpose}
-                onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, purpose: e.target.value });
+                  if (errors.purpose) setErrors({ ...errors, purpose: null });
+                }}
                 placeholder="e.g., Attending AWS Tech Summit 2026 as keynote speaker and conducting on-site client architecture reviews."
-                className="w-full p-3 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+                className={`w-full p-3 text-xs sm:text-sm bg-slate-50 border rounded-xl focus:bg-white focus:outline-none focus:ring-2 transition-all ${
+                  errors.purpose
+                    ? 'border-red-400 focus:ring-red-500/20 focus:border-red-500 bg-red-50/20'
+                    : 'border-slate-200 focus:ring-brand-500/20 focus:border-brand-500'
+                }`}
               />
+              {errors.purpose && (
+                <p className="text-xs text-red-600 mt-1 font-medium">{errors.purpose}</p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -290,13 +337,21 @@ export const TravelRequestModal = ({ isOpen, onClose, onSuccess }) => {
                 </label>
                 <select
                   value={formData.origin}
-                  onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
-                  className="w-full p-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 font-medium"
+                  onChange={(e) => {
+                    setFormData({ ...formData, origin: e.target.value });
+                    if (errors.origin) setErrors({ ...errors, origin: null });
+                  }}
+                  className={`w-full p-2.5 text-xs sm:text-sm bg-slate-50 border rounded-xl focus:bg-white focus:outline-none focus:ring-2 font-medium ${
+                    errors.origin
+                      ? 'border-red-400 focus:ring-red-500/20 focus:border-red-500 bg-red-50/20'
+                      : 'border-slate-200 focus:ring-brand-500/20 focus:border-brand-500'
+                  }`}
                 >
                   {CITIES.map((c) => (
                     <option key={c} value={c}>{c}</option>
                   ))}
                 </select>
+                {errors.origin && <p className="text-xs text-red-600 mt-1 font-medium">{errors.origin}</p>}
               </div>
 
               <div>
@@ -305,13 +360,21 @@ export const TravelRequestModal = ({ isOpen, onClose, onSuccess }) => {
                 </label>
                 <select
                   value={formData.destination}
-                  onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
-                  className="w-full p-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 font-medium"
+                  onChange={(e) => {
+                    setFormData({ ...formData, destination: e.target.value });
+                    if (errors.destination) setErrors({ ...errors, destination: null });
+                  }}
+                  className={`w-full p-2.5 text-xs sm:text-sm bg-slate-50 border rounded-xl focus:bg-white focus:outline-none focus:ring-2 font-medium ${
+                    errors.destination
+                      ? 'border-red-400 focus:ring-red-500/20 focus:border-red-500 bg-red-50/20'
+                      : 'border-slate-200 focus:ring-brand-500/20 focus:border-brand-500'
+                  }`}
                 >
                   {CITIES.map((c) => (
                     <option key={c} value={c}>{c}</option>
                   ))}
                 </select>
+                {errors.destination && <p className="text-xs text-red-600 mt-1 font-medium">{errors.destination}</p>}
               </div>
             </div>
 
@@ -340,9 +403,19 @@ export const TravelRequestModal = ({ isOpen, onClose, onSuccess }) => {
                 <input
                   type="date"
                   value={formData.departureDate}
-                  onChange={(e) => setFormData({ ...formData, departureDate: e.target.value })}
-                  className="w-full p-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 font-medium"
+                  onChange={(e) => {
+                    setFormData({ ...formData, departureDate: e.target.value });
+                    if (errors.departureDate || errors.returnDate) {
+                      setErrors({ ...errors, departureDate: null, returnDate: null });
+                    }
+                  }}
+                  className={`w-full p-2.5 text-xs sm:text-sm bg-slate-50 border rounded-xl focus:bg-white focus:outline-none focus:ring-2 font-medium ${
+                    errors.departureDate
+                      ? 'border-red-400 focus:ring-red-500/20 focus:border-red-500 bg-red-50/20'
+                      : 'border-slate-200 focus:ring-brand-500/20 focus:border-brand-500'
+                  }`}
                 />
+                {errors.departureDate && <p className="text-xs text-red-600 mt-1 font-medium">{errors.departureDate}</p>}
               </div>
 
               <div>
@@ -352,9 +425,19 @@ export const TravelRequestModal = ({ isOpen, onClose, onSuccess }) => {
                 <input
                   type="date"
                   value={formData.returnDate}
-                  onChange={(e) => setFormData({ ...formData, returnDate: e.target.value })}
-                  className="w-full p-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 font-medium"
+                  onChange={(e) => {
+                    setFormData({ ...formData, returnDate: e.target.value });
+                    if (errors.returnDate) {
+                      setErrors({ ...errors, returnDate: null });
+                    }
+                  }}
+                  className={`w-full p-2.5 text-xs sm:text-sm bg-slate-50 border rounded-xl focus:bg-white focus:outline-none focus:ring-2 font-medium ${
+                    errors.returnDate
+                      ? 'border-red-400 focus:ring-red-500/20 focus:border-red-500 bg-red-50/20'
+                      : 'border-slate-200 focus:ring-brand-500/20 focus:border-brand-500'
+                  }`}
                 />
+                {errors.returnDate && <p className="text-xs text-red-600 mt-1 font-medium">{errors.returnDate}</p>}
               </div>
             </div>
           </div>
@@ -525,7 +608,7 @@ export const TravelRequestModal = ({ isOpen, onClose, onSuccess }) => {
 
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
               <span className="font-bold text-slate-700">Purpose: </span>
-              <span className="text-slate-600">{formData.purpose || 'Client Visit & Technical Consulting'}</span>
+              <span className="text-slate-600">{formData.purpose || <span className="text-amber-600 italic font-medium">Not specified (Required)</span>}</span>
             </div>
 
             <PolicyExceptionBanner

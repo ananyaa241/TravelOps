@@ -124,6 +124,19 @@ const createTravelRequest = async (req, res, next) => {
       status = 'Submitted',
     } = req.body;
 
+    if (!purpose || !purpose.trim()) {
+      return res.status(400).json({ success: false, message: 'Business purpose of travel is required.' });
+    }
+    if (!origin || !origin.trim()) {
+      return res.status(400).json({ success: false, message: 'Origin city is required.' });
+    }
+    if (!destination || !destination.trim()) {
+      return res.status(400).json({ success: false, message: 'Destination city is required.' });
+    }
+    if (!departureDate || !returnDate) {
+      return res.status(400).json({ success: false, message: 'Departure and return dates are required.' });
+    }
+
     const user = req.user;
     const deptId = user.department;
     let deptName = user.departmentName || 'Engineering';
